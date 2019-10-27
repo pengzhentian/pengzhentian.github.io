@@ -1,6 +1,266 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Spring Data JPA基本查询</title>
+    <url>/2019/10/27/Spring-Data-JPA%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/</url>
+    <content><![CDATA[<p>Spring Data JPA分别使用接口中方法，JPQL，原生SQL和根据方法命名规则的方法实现基本的CRUD操作<br>主要内容<br>    1. 依赖导入<br>    2. Spring配置文件编写<br>    3. 数据表映射的实体类<br>    4. 持久层接口的编写</p>
+<a id="more"></a>
+<h3 id="Spring-Data-JPA与JPA-hibernate之间的关系"><a href="#Spring-Data-JPA与JPA-hibernate之间的关系" class="headerlink" title="Spring Data JPA与JPA,hibernate之间的关系"></a>Spring Data JPA与JPA,hibernate之间的关系</h3><h2 id=""><a href="#" class="headerlink" title=""></a><img src="relationship.jpg" alt=""></h2><h3 id="依赖"><a href="#依赖" class="headerlink" title="依赖"></a>依赖</h3><ul>
+<li>IOC</li>
+<li>AOP</li>
+<li>Spring Data JPA<ul>
+<li>el</li>
+</ul>
+</li>
+<li>ORM<ul>
+<li><strong><em>ORM依赖tx jar包，事务相关依赖可能存在jar包冲突</em></strong></li>
+</ul>
+</li>
+<li>hibernate</li>
+<li>log4j</li>
+<li>mysql驱动</li>
+<li>c3p0</li>
+<li>test<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">properties</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">spring.version</span>&gt;</span>5.0.2.RELEASE<span class="tag">&lt;/<span class="name">spring.version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">mysql.version</span>&gt;</span>5.1.6<span class="tag">&lt;/<span class="name">mysql.version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">hibernate.version</span>&gt;</span>5.0.7.Final<span class="tag">&lt;/<span class="name">hibernate.version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">slf4j.version</span>&gt;</span>1.6.6<span class="tag">&lt;/<span class="name">slf4j.version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">log4j.version</span>&gt;</span>1.2.12<span class="tag">&lt;/<span class="name">log4j.version</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">properties</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependencies</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- IOC --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-context<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;spring.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-context-support<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;spring.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-beans<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;spring.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-core<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;spring.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- AOP --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-aop<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;spring.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.aspectj<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>aspectjweaver<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.6.8<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- spring data jpa --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.data<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-data-jpa<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.9.0.RELEASE<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- spring data jpa el --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>javax.el<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>javax.el-api<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.2.4<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.glassfish.web<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>javax.el<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.2.4<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- ORM --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-orm<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;spring.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-tx<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;spring.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- hibernate --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.hibernate<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>hibernate-core<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;hibernate.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.hibernate<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>hibernate-entitymanager<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;hibernate.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.hibernate<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>hibernate-validator<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>5.2.1.Final<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- test --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-test<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;spring.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>junit<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>junit<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>4.12<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">scope</span>&gt;</span>test<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- mysql --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>mysql<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>mysql-connector-java<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;mysql.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- c3po --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>c3p0<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>c3p0<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>0.9.1.2<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">         <span class="comment">&lt;!-- log --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>log4j<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>log4j<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;log4j.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.slf4j<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>slf4j-api<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;slf4j.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.slf4j<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>slf4j-log4j12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;slf4j.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h3 id="Spring整合Spring-Data-JPA配置"><a href="#Spring整合Spring-Data-JPA配置" class="headerlink" title="Spring整合Spring Data JPA配置"></a>Spring整合Spring Data JPA配置</h3><ul>
+<li>applicationContext.xml<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">beans</span> <span class="attr">xmlns</span>=<span class="string">"http://www.springframework.org/schema/beans"</span></span></span><br><span class="line"><span class="tag">       <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="attr">xmlns:aop</span>=<span class="string">"http://www.springframework.org/schema/aop"</span></span></span><br><span class="line"><span class="tag">       <span class="attr">xmlns:context</span>=<span class="string">"http://www.springframework.org/schema/context"</span></span></span><br><span class="line"><span class="tag">       <span class="attr">xmlns:jdbc</span>=<span class="string">"http://www.springframework.org/schema/jdbc"</span> <span class="attr">xmlns:tx</span>=<span class="string">"http://www.springframework.org/schema/tx"</span></span></span><br><span class="line"><span class="tag">       <span class="attr">xmlns:jpa</span>=<span class="string">"http://www.springframework.org/schema/data/jpa"</span> <span class="attr">xmlns:task</span>=<span class="string">"http://www.springframework.org/schema/task"</span></span></span><br><span class="line"><span class="tag">       <span class="attr">xsi:schemaLocation</span>=<span class="string">"</span></span></span><br><span class="line"><span class="tag"><span class="string">		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd</span></span></span><br><span class="line"><span class="tag"><span class="string">		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd</span></span></span><br><span class="line"><span class="tag"><span class="string">		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd</span></span></span><br><span class="line"><span class="tag"><span class="string">		http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd</span></span></span><br><span class="line"><span class="tag"><span class="string">		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd</span></span></span><br><span class="line"><span class="tag"><span class="string">		http://www.springframework.org/schema/data/jpa</span></span></span><br><span class="line"><span class="tag"><span class="string">		http://www.springframework.org/schema/data/jpa/spring-jpa.xsd"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">&lt;!-- 实体管理器 --&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"entityManagerFactory"</span> <span class="attr">class</span>=<span class="string">"org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean"</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- 数据源 --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"dataSource"</span> <span class="attr">ref</span>=<span class="string">"dataSource"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- 扫描的包 --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"packagesToScan"</span> <span class="attr">value</span>=<span class="string">"cn.itcast.domain"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- JPA实现方式 --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"persistenceProvider"</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">bean</span> <span class="attr">class</span>=<span class="string">"org.hibernate.jpa.HibernatePersistenceProvider"</span>&gt;</span><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">&lt;!-- JPA供应商适配器 --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"jpaVendorAdapter"</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">bean</span> <span class="attr">class</span>=<span class="string">"org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter"</span>&gt;</span></span><br><span class="line">                <span class="comment">&lt;!-- 数据库类型 --&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"database"</span> <span class="attr">value</span>=<span class="string">"MYSQL"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line">                <span class="comment">&lt;!-- 是否显示SQl语句 --&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"showSql"</span> <span class="attr">value</span>=<span class="string">"true"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line">                <span class="comment">&lt;!-- 是否创建数据库表 --&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"generateDdl"</span> <span class="attr">value</span>=<span class="string">"false"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line">                <span class="comment">&lt;!-- 数据库方言 --&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"databasePlatform"</span> <span class="attr">value</span>=<span class="string">"org.hibernate.dialect.MySQLDialect"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- 配置hibernate其他属性 --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"jpaProperties"</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">props</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">prop</span> <span class="attr">key</span>=<span class="string">"hibernate.format_sql"</span>&gt;</span>true<span class="tag">&lt;/<span class="name">prop</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">props</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"dataSource"</span> <span class="attr">class</span>=<span class="string">"com.mchange.v2.c3p0.ComboPooledDataSource"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"driverClass"</span> <span class="attr">value</span>=<span class="string">"com.mysql.jdbc.Driver"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"jdbcUrl"</span> <span class="attr">value</span>=<span class="string">"jdbc:mysql://localhost:3306/jpa"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"user"</span> <span class="attr">value</span>=<span class="string">"root"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"password"</span> <span class="attr">value</span>=<span class="string">"root"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">&lt;!-- 事物管理器 --&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"transactionManager"</span> <span class="attr">class</span>=<span class="string">"org.springframework.orm.jpa.JpaTransactionManager"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"entityManagerFactory"</span> <span class="attr">ref</span>=<span class="string">"entityManagerFactory"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">&lt;!-- 整合Spring Data Jpa --&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">jpa:repositories</span> <span class="attr">base-package</span>=<span class="string">"cn.itcast.dao"</span> <span class="attr">entity-manager-factory-ref</span>=<span class="string">"entityManagerFactory"</span></span></span><br><span class="line"><span class="tag">                      <span class="attr">transaction-manager-ref</span>=<span class="string">"transactionManager"</span>&gt;</span><span class="tag">&lt;/<span class="name">jpa:repositories</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">&lt;!-- 事务通知 --&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">tx:advice</span> <span class="attr">id</span>=<span class="string">"txAdvice"</span> <span class="attr">transaction-manager</span>=<span class="string">"transactionManager"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">tx:attributes</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">tx:method</span> <span class="attr">name</span>=<span class="string">"save*"</span> <span class="attr">propagation</span>=<span class="string">"REQUIRED"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">tx:method</span> <span class="attr">name</span>=<span class="string">"insert*"</span> <span class="attr">propagation</span>=<span class="string">"REQUIRED"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">tx:method</span> <span class="attr">name</span>=<span class="string">"update*"</span> <span class="attr">propagation</span>=<span class="string">"REQUIRED"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">tx:method</span> <span class="attr">name</span>=<span class="string">"delete*"</span> <span class="attr">propagation</span>=<span class="string">"REQUIRED"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">tx:method</span> <span class="attr">name</span>=<span class="string">"get*"</span> <span class="attr">read-only</span>=<span class="string">"true"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">tx:method</span> <span class="attr">name</span>=<span class="string">"find*"</span> <span class="attr">read-only</span>=<span class="string">"true"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">tx:method</span> <span class="attr">name</span>=<span class="string">"*"</span> <span class="attr">propagation</span>=<span class="string">"REQUIRED"</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">tx:attributes</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">tx:advice</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">&lt;!-- AOP --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">aop:config</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">aop:pointcut</span> <span class="attr">id</span>=<span class="string">"pt1"</span> <span class="attr">expression</span>=<span class="string">"execution(* cn.itcast.service.impl.*.*(..))"</span>&gt;</span><span class="tag">&lt;/<span class="name">aop:pointcut</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">aop:advisor</span> <span class="attr">advice-ref</span>=<span class="string">"txAdvice"</span> <span class="attr">pointcut-ref</span>=<span class="string">"pt1"</span>&gt;</span><span class="tag">&lt;/<span class="name">aop:advisor</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">aop:config</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">&lt;!-- 扫描的包 --&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">context:component-scan</span> <span class="attr">base-package</span>=<span class="string">"cn.itcast"</span>&gt;</span><span class="tag">&lt;/<span class="name">context:component-scan</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">beans</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h3 id="实体类"><a href="#实体类" class="headerlink" title="实体类"></a>实体类</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Entity</span></span><br><span class="line"><span class="meta">@Table</span>(name = <span class="string">"cst_customer"</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Customer</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Id</span></span><br><span class="line">    <span class="meta">@GeneratedValue</span>(strategy = GenerationType.IDENTITY)</span><br><span class="line">    <span class="meta">@Column</span>(name = <span class="string">"cust_id"</span>)</span><br><span class="line">    <span class="keyword">private</span> Long custId;</span><br><span class="line">    <span class="meta">@Column</span>(name = <span class="string">"cust_name"</span>)</span><br><span class="line">    <span class="keyword">private</span> String custName;</span><br><span class="line">    <span class="meta">@Column</span>(name = <span class="string">"cust_source"</span>)</span><br><span class="line">    <span class="keyword">private</span> String custSource;</span><br><span class="line">    <span class="meta">@Column</span>(name = <span class="string">"cust_industry"</span>)</span><br><span class="line">    <span class="keyword">private</span> String custIndustry;</span><br><span class="line">    <span class="meta">@Column</span>(name = <span class="string">"cust_level"</span>)</span><br><span class="line">    <span class="keyword">private</span> String custLevel;</span><br><span class="line">    <span class="meta">@Column</span>(name = <span class="string">"cust_address"</span>)</span><br><span class="line">    <span class="keyword">private</span> String custAddress;</span><br><span class="line">    <span class="meta">@Column</span>(name = <span class="string">"cust_phone"</span>)</span><br><span class="line">    <span class="keyword">private</span> String custPhone;</span><br><span class="line">    <span class="comment">//省略get,set方法</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="dao层接口"><a href="#dao层接口" class="headerlink" title="dao层接口"></a>dao层接口</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">CustomerDao</span> <span class="keyword">extends</span> <span class="title">JpaRepository</span>&lt;<span class="title">Customer</span>,<span class="title">Long</span>&gt;,<span class="title">JpaSpecificationExecutor</span>&lt;<span class="title">Customer</span>&gt; </span>&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="基本CRUD"><a href="#基本CRUD" class="headerlink" title="基本CRUD"></a>基本CRUD</h3></li>
+</ul>
+<ol>
+<li><code>findOne(id)</code>：根据id进行查询</li>
+<li><code>save(Object)</code>：保存或者更新<ol>
+<li>对象无<code>id</code>属性：保存</li>
+<li>对象有id属性：首先进行一次查询<ul>
+<li>有值：进行更新</li>
+<li>无值：添加</li>
+</ul>
+</li>
+</ol>
+</li>
+<li><code>delete(id)</code>：根据id删除</li>
+<li><code>findAll()</code>：查询全部</li>
+</ol>
+<h3 id="复杂查询"><a href="#复杂查询" class="headerlink" title="复杂查询"></a>复杂查询</h3><h4 id="通过接口中已定义方法"><a href="#通过接口中已定义方法" class="headerlink" title="通过接口中已定义方法"></a>通过接口中已定义方法</h4><ol>
+<li><code>getOne(id)</code>：查询（<strong>延迟加载</strong>）</li>
+<li><code>count()</code></li>
+<li><code>exists()</code></li>
+</ol>
+<h4 id="JPQL语句"><a href="#JPQL语句" class="headerlink" title="JPQL语句"></a>JPQL语句</h4><ol>
+<li><p>查询</p>
+ <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Query</span>(value = <span class="string">"from Customer where custName = ?"</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> Customer <span class="title">findByName</span><span class="params">(String custName)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>多占位符时变量的赋值</p>
+<ol>
+<li><p>参数顺序与占位符顺序保持一致</p>
+ <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Query</span>(value = <span class="string">"from Customer where custName = ? and custId = ?"</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> Customer <span class="title">findByNameAndId</span><span class="params">(Long custName,String custId)</span></span>;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>占位符后添加索引</p>
+ <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Query</span>(value = <span class="string">"from Customer where custName = ?2 and custId = ?1"</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> Customer <span class="title">findByNameAndId</span><span class="params">(Long custId,String custName)</span></span>;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>使用注解</p>
+ <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Query</span>(value = <span class="string">"from Customer where custName = :custName and custId = :custId"</span>)</span><br><span class="line">    <span class="function"><span class="keyword">public</span> Customer <span class="title">findByNameAndId</span><span class="params">(@Param(<span class="string">"custId"</span>)</span>Long custId,@<span class="title">Param</span><span class="params">(<span class="string">"custName"</span>)</span>String custName)</span>;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><p>添加</p>
+<ul>
+<li><p>需要使用注解<code>@Modifying</code></p>
+</li>
+<li><p>需要事务支持</p>
+</li>
+<li><p>需设置不自动回滚</p>
+  <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Modifying</span><span class="meta">@Query</span>(value = <span class="string">"update Customer set custName = ? where custId = ?"</span>)</span><br><span class="line"><span class="meta">@Modifying</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">update</span><span class="params">( String custName, Long custId)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="meta">@Transactional</span></span><br><span class="line"><span class="meta">@Rollback</span>(value = <span class="keyword">false</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testJpqlUpdate</span><span class="params">()</span></span>&#123;</span><br><span class="line">    customerDao.update(<span class="string">"测试数据4"</span>,<span class="number">2L</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p>删除</p>
+<ul>
+<li><p>对比添加时，注解，事务，回滚可写可不写</p>
+  <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Query</span>(value = <span class="string">"delete from Customer where custId = ?"</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">delete</span><span class="params">(String custId)</span></span>;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+</li>
+</ol>
+<h4 id="原生SQL语句"><a href="#原生SQL语句" class="headerlink" title="原生SQL语句"></a>原生SQL语句</h4><ul>
+<li><code>@Query</code>注解<code>nativeQuery</code>属性设置为<code>true</code></li>
+</ul>
+<ol>
+<li><p>查询</p>
+ <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Query</span>(value = <span class="string">"select * from cst_customer"</span>,nativeQuery = <span class="keyword">true</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> List&lt;Customer&gt; <span class="title">findBySql</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Query</span>(value = <span class="string">"select * from cst_customer where cust_name like ?"</span>,nativeQuery = <span class="keyword">true</span>)</span><br><span class="line"><span class="keyword">public</span> List&lt;Object[]&gt; findBySqlWithName(String custName);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>更新</p>
+<ul>
+<li><p>事务支持</p>
+</li>
+<li><p>设置不自动回滚</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Query</span>(value = <span class="string">"select * from cst_customer"</span>,nativeQuery = <span class="keyword">true</span>)</span><br><span class="line">    <span class="function"><span class="keyword">public</span> List&lt;Customer&gt; <span class="title">findBySql</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Query</span>(value = <span class="string">"select * from cst_customer where cust_name like ?"</span>,nativeQuery = <span class="keyword">true</span>)</span><br><span class="line">    <span class="keyword">public</span> List&lt;Object[]&gt; findBySqlWithName(String custName);</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Query</span>(value = <span class="string">"update cst_customer set cust_name = ? where cust_id = ?"</span>,nativeQuery = <span class="keyword">true</span>)</span><br><span class="line">    <span class="meta">@Modifying</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">updateCustomer</span><span class="params">( String custName, Long custId)</span></span>;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+</li>
+</ol>
+<h4 id="方法名称规则查询"><a href="#方法名称规则查询" class="headerlink" title="方法名称规则查询"></a>方法名称规则查询</h4><ul>
+<li>findBy + 属性名<ul>
+<li>运行期解析：findBy –&gt; from 实体类；属性名 –&gt; where 属性 = ?</li>
+</ul>
+</li>
+<li>findBy + 属性名 +查询方式（Like | IsNull）</li>
+<li>命名规则表</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th><strong>Keyword</strong></th>
+<th><strong>Sample</strong></th>
+<th><strong>JPQL</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>And</td>
+<td>findByLastnameAndFirstname</td>
+<td>…   where x.lastname = ?1 and x.firstname = ?2</td>
+</tr>
+<tr>
+<td>Or</td>
+<td>findByLastnameOrFirstname</td>
+<td>…   where x.lastname = ?1 or x.firstname = ?2</td>
+</tr>
+<tr>
+<td>Is,Equals</td>
+<td>findByFirstnameIs,   findByFirstnameEquals</td>
+<td>…   where x.firstname = ?1</td>
+</tr>
+<tr>
+<td>Between</td>
+<td>findByStartDateBetween</td>
+<td>…   where x.startDate between ?1 and ?2</td>
+</tr>
+<tr>
+<td>LessThan</td>
+<td>findByAgeLessThan</td>
+<td>…   where x.age &lt; ?1</td>
+</tr>
+<tr>
+<td>LessThanEqual</td>
+<td>findByAgeLessThanEqual</td>
+<td>…   where x.age ⇐ ?1</td>
+</tr>
+<tr>
+<td>GreaterThan</td>
+<td>findByAgeGreaterThan</td>
+<td>…   where x.age &gt; ?1</td>
+</tr>
+<tr>
+<td>GreaterThanEqual</td>
+<td>findByAgeGreaterThanEqual</td>
+<td>…   where x.age &gt;= ?1</td>
+</tr>
+<tr>
+<td>After</td>
+<td>findByStartDateAfter</td>
+<td>…   where x.startDate &gt; ?1</td>
+</tr>
+<tr>
+<td>Before</td>
+<td>findByStartDateBefore</td>
+<td>…   where x.startDate &lt; ?1</td>
+</tr>
+<tr>
+<td>IsNull</td>
+<td>findByAgeIsNull</td>
+<td>…   where x.age is null</td>
+</tr>
+<tr>
+<td>IsNotNull,NotNull</td>
+<td>findByAge(Is)NotNull</td>
+<td>…   where x.age not null</td>
+</tr>
+<tr>
+<td>Like</td>
+<td>findByFirstnameLike</td>
+<td>…   where x.firstname like ?1</td>
+</tr>
+<tr>
+<td>NotLike</td>
+<td>findByFirstnameNotLike</td>
+<td>… where   x.firstname not like ?1</td>
+</tr>
+<tr>
+<td>StartingWith</td>
+<td>findByFirstnameStartingWith</td>
+<td>…   where x.firstname like ?1 (parameter bound with appended %)</td>
+</tr>
+<tr>
+<td>EndingWith</td>
+<td>findByFirstnameEndingWith</td>
+<td>…   where x.firstname like ?1 (parameter bound with prepended %)</td>
+</tr>
+<tr>
+<td>Containing</td>
+<td>findByFirstnameContaining</td>
+<td>…   where x.firstname like ?1 (parameter bound wrapped in %)</td>
+</tr>
+<tr>
+<td>OrderBy</td>
+<td>findByAgeOrderByLastnameDesc</td>
+<td>…   where x.age = ?1 order by x.lastname desc</td>
+</tr>
+<tr>
+<td>Not</td>
+<td>findByLastnameNot</td>
+<td>…   where x.lastname &lt;&gt; ?1</td>
+</tr>
+<tr>
+<td>In</td>
+<td>findByAgeIn(Collection ages)</td>
+<td>…   where x.age in ?1</td>
+</tr>
+<tr>
+<td>NotIn</td>
+<td>findByAgeNotIn(Collection age)</td>
+<td>…   where x.age not in ?1</td>
+</tr>
+<tr>
+<td>TRUE</td>
+<td>findByActiveTrue()</td>
+<td>…   where x.active = true</td>
+</tr>
+<tr>
+<td>FALSE</td>
+<td>findByActiveFalse()</td>
+<td>…   where x.active = false</td>
+</tr>
+<tr>
+<td>IgnoreCase</td>
+<td>findByFirstnameIgnoreCase</td>
+<td>…   where UPPER(x.firstame) = UPPER(?1)</td>
+</tr>
+</tbody></table>
+<h3 id="实现过程"><a href="#实现过程" class="headerlink" title="实现过程"></a>实现过程</h3><ol>
+<li>Dao接口继承<code>JpaRepository</code>和<code>JpaSpecificationExecutor</code></li>
+<li>自动注入时注入的customerDao对象，本质上是通过<code>JdkDynamicAopProxy</code>生成的一个<strong>代理对象</strong></li>
+<li><code>JdkDynamicAopProxy</code>的<code>invoke</code>方法，生成的代理对象为<code>SimpleJpaRepository</code></li>
+<li><code>SimpleJpaRepository</code>中<code>findOne</code> –&gt; <code>EntityManager</code>的<code>find</code>方法，即标准JPA操作</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Spring Data JPA</category>
+      </categories>
+      <tags>
+        <tag>JPA</tag>
+        <tag>JPQL</tag>
+        <tag>Dao</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>hexo待完成项</title>
     <url>/2019/10/25/%E5%BE%85%E5%AE%8C%E6%88%90%E9%A1%B9/</url>
     <content><![CDATA[<p>记录一些hexo博客未完成的功能以及需要优化的地方</p>
