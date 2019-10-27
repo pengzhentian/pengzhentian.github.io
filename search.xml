@@ -5,7 +5,8 @@
     <url>/2019/10/27/Spring-Data-JPA%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/</url>
     <content><![CDATA[<p>Spring Data JPA分别使用接口中方法，JPQL，原生SQL和根据方法命名规则的方法实现基本的CRUD操作<br>主要内容<br>    1. 依赖导入<br>    2. Spring配置文件编写<br>    3. 数据表映射的实体类<br>    4. 持久层接口的编写</p>
 <a id="more"></a>
-<h3 id="Spring-Data-JPA与JPA-hibernate之间的关系"><a href="#Spring-Data-JPA与JPA-hibernate之间的关系" class="headerlink" title="Spring Data JPA与JPA,hibernate之间的关系"></a>Spring Data JPA与JPA,hibernate之间的关系</h3><h2 id=""><a href="#" class="headerlink" title=""></a><img src="relationship.jpg" alt=""></h2><h3 id="依赖"><a href="#依赖" class="headerlink" title="依赖"></a>依赖</h3><ul>
+<h3 id="Spring-Data-JPA与JPA-hibernate之间的关系"><a href="#Spring-Data-JPA与JPA-hibernate之间的关系" class="headerlink" title="Spring Data JPA与JPA,hibernate之间的关系"></a>Spring Data JPA与JPA,hibernate之间的关系</h3><p><img src="relationship.jpg" alt=""></p>
+<h3 id="依赖"><a href="#依赖" class="headerlink" title="依赖"></a>依赖</h3><ul>
 <li>IOC</li>
 <li>AOP</li>
 <li>Spring Data JPA<ul>
